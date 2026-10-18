@@ -1,0 +1,403 @@
+---
+import BlogLayout from "../../layouts/BlogLayout.astro";
+
+const faqSchema = [
+  {
+    question: "¿Hace Wazuh que los registros sean inmutables para el ENS?",
+    answer: "No. Un log indexado en Wazuh se puede borrar o modificar con el rol de administrador del indexer o con root en el manager. R4 de op.exp.8 no exige inmutabilidad, exige que los registros y sus copias solo los acceda o elimine personal autorizado. Wazuh lo cubre controlando quién tiene acceso de administración (roles, usuarios de solo lectura, permisos en disco). Para inmutabilidad real hay que añadir snapshots en almacenamiento WORM, como S3 con Object Lock."
+  },
+  {
+    question: "¿Por qué un usuario de solo lectura del indexer puede seguir cambiando cosas en Wazuh?",
+    answer: "Porque Wazuh tiene dos sistemas de permisos: el plugin de seguridad del indexer y el RBAC de la API. Por defecto el dashboard habla con la API siempre como wazuh-wui (administrador). Si no se activa run_as, el usuario de solo lectura del indexer sigue pudiendo crear grupos de agentes o editar configuración a través de la app. Con run_as activado la API aplica los permisos del usuario real."
+  },
+  {
+    question: "¿Qué plazo de retención de logs hay que poner en el ENS?",
+    answer: "El ENS no fija un plazo universal. Pide que el periodo esté definido y documentado, y que se cumpla. Los plazos de la plantilla Word que acompaña este artículo (90 días online y 12 meses totales para eventos de autenticación, 180 días y 24 meses para cambios de cuentas y privilegios) son ejemplos que cada organización debe ajustar a su política de seguridad."
+  },
+  {
+    question: "¿Un panel vacío en el dashboard significa que no pasa nada?",
+    answer: "No: normalmente significa que falta una fuente de datos. Por ejemplo, sin el canal Security en el agente de Windows o sin la política de auditoría de inicio de sesión activada, no llegarán los eventos 4624 y 4625 y el panel de logins saldrá vacío. Conviene revisar esa lista de comprobación antes de interpretar el dashboard."
+  }
+];
+
+const crearRol = `curl -sk -u admin:$INDEXER_PASS -H 'Content-Type: application/json' -X PUT \\
+  https://127.0.0.1:9200/_plugins/_security/api/roles/ens_readonly -d '{
+  "cluster_permissions": ["cluster_composite_ops_ro"],
+  "index_permissions": [
+    {"index_patterns": ["wazuh-alerts-*","wazuh-archives-*","wazuh-monitoring-*","wazuh-statistics-*","wazuh-states-*"],
+     "allowed_actions": ["read","indices:admin/mappings/get","indices:admin/resolve/index"]},
+    {"index_patterns": [".kibana*",".opensearch_dashboards*"], "allowed_actions": ["read"]}],
+  "tenant_permissions": [{"tenant_patterns": ["global_tenant"], "allowed_actions": ["kibana_all_read"]}]}'`;
+
+const crearUsuario = `curl -sk -u admin:$INDEXER_PASS -H 'Content-Type: application/json' -X PUT \\
+  https://127.0.0.1:9200/_plugins/_security/api/internalusers/analista \\
+  -d '{"password":"<clave>","backend_roles":["analista_ro"]}'`;
+
+const mapeo = `curl -sk -u admin:$INDEXER_PASS -H 'Content-Type: application/json' -X PUT \\
+  https://127.0.0.1:9200/_plugins/_security/api/rolesmapping/ens_readonly \\
+  -d '{"users":["analista"],"backend_roles":["analista_ro"]}'`;
+
+const apiRol = `# token con el usuario wazuh-wui (su clave está en wazuh.yml)
+TOKEN=$(curl -sk -u wazuh-wui:<clave de wazuh-wui> -X POST \\
+  'https://127.0.0.1:55000/security/user/authenticate?raw=true')
+
+# regla de mapeo: el usuario analista recibe el rol readonly de la API
+curl -sk -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -X POST \\
+  https://127.0.0.1:55000/security/rules \\
+  -d '{"name":"wui_analista_ro","rule":{"FIND":{"user_name":"analista"}}}'
+
+# unir la regla (id devuelto arriba) al rol readonly (id 2 por defecto)
+curl -sk -H "Authorization: Bearer $TOKEN" -X POST \\
+  'https://127.0.0.1:55000/security/roles/2/rules?rule_ids=<id de la regla>'`;
+
+const runAs = `sudo sed -i 's/^\\(\\s*\\)run_as: false/\\1run_as: true/' /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+sudo systemctl restart wazuh-dashboard`;
+
+const ismPolicy = `PUT _plugins/_ism/policies/wazuh_retencion_ens
+{
+  "policy": {
+    "description": "Retención alertas op.exp.8 - ENS nivel medio",
+    "default_state": "hot",
+    "states": [
+      { "name": "hot", "actions": [],
+        "transitions": [{ "state_name": "delete", "conditions": { "min_index_age": "395d" } }] },
+      { "name": "delete", "actions": [{ "delete": {} }] }
+    ]
+  }
+}`;
+---
+
+<BlogLayout
+  title="Wazuh y op.exp.8 del ENS: dashboard, retención y solo lectura"
+  description="Cómo cubrir los refuerzos R1 a R4 de op.exp.8 con Wazuh: dashboard de revisión, plantilla Word de retención y usuario de solo lectura. Descargables incluidos."
+  publishDate="2026-10-18"
+  author="AI Security"
+  readTime="12 min"
+  tags={["Wazuh", "ENS", "op.exp", "Dashboard", "Cumplimiento Normativo", "Ciberseguridad"]}
+  canonical="https://aisecurity.es/blog/wazuh-op-exp-8-dashboard-retencion-solo-lectura"
+  faqSchema={faqSchema}>
+
+  <p>
+    En <a href="/blog/op-exp-8-registro-actividad-ens">op.exp.8 ENS: qué exige</a> vimos qué pide la medida. Este artículo es la parte práctica, la que acompaña al vídeo del curso: <strong>cómo se enseña en Wazuh que se cumplen los refuerzos R1 a R4</strong> del nivel medio. Hay dos descargables (el dashboard y la plantilla de retención) y una guía paso a paso para crear un <strong>usuario de solo lectura</strong>, que es lo que hace falta para R4.
+  </p>
+
+  <div style="background:rgba(139,92,246,0.08);border-left:4px solid rgba(167,139,250,0.5);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:0 0.5rem 0.5rem 0;">
+    <p class="m-0" style="color:rgba(255,255,255,0.85);max-width:none;"><strong style="color:#c4b5fd;">Descargables:</strong>
+      <a href="/recursos/ens-opexp8-dashboard.ndjson" download>Dashboard ENS op.exp.8 (.ndjson)</a> ·
+      <a href="/recursos/ens-opexp8-registro-y-retencion.docx" download>Plantilla de eventos auditados y retención (.docx)</a>
+    </p>
+  </div>
+
+  <h2>¿Qué cubre Wazuh de op.exp.8 y qué no?</h2>
+
+  <p>
+    Wazuh <strong>recolecta y normaliza</strong> los registros; el contenido lo genera el sistema de origen. Si un servidor no registra el usuario o el resultado de una acción, Wazuh no lo inventa. Por eso la primera decisión es <em>qué se activa en cada servidor</em>: lo que llega al manager depende de los <code>&lt;localfile&gt;</code> del <code>ossec.conf</code> de cada agente (canales Security y System en Windows, auth.log o secure en Linux, auditd, Sysmon, syslog remoto para NAS y red). Y un agente desconectado es un servidor sin registro, así que la cobertura también se vigila.
+  </p>
+
+  <h2>Registro de auditoría (op.exp.8 base): un evento real</h2>
+
+  <p>
+    La medida base pide usuario, fecha y hora, sobre qué información, tipo de evento y resultado. En <strong>Discover</strong>, abre un evento de inicio de sesión fallido (Windows 4625 o SSH) y comprueba que aparecen:
+  </p>
+  <ul>
+    <li><code>timestamp</code>: fecha y hora.</li>
+    <li>Usuario: <code>data.win.eventdata.targetUserName</code> en Windows o <code>data.srcuser</code> en Linux.</li>
+    <li><code>agent.name</code>: sobre qué sistema.</li>
+    <li><code>rule.description</code>: tipo de evento y resultado.</li>
+  </ul>
+
+  <h2>R1: revisión periódica con un dashboard</h2>
+
+  <p>
+    La norma habla de revisión <em>informal</em> periódica: basta con mirar un panel con una frecuencia definida (y dejar constancia de que se hace). El dashboard descargable agrupa lo que conviene mirar:
+  </p>
+  <ul>
+    <li><strong>Agentes desconectados</strong>: cobertura, ¿falta algún sistema? (regla 504 de serie).</li>
+    <li><strong>Logins correctos vs fallidos</strong> en el tiempo, y mapa por origen.</li>
+    <li><strong>Top usuarios y top IP origen</strong> de fallos de autenticación.</li>
+    <li><strong>Privilegios</strong>: altas en grupos privilegiados, sudo y cuentas.</li>
+    <li><strong>Cambios de hora</strong> del sistema (relacionado con R2).</li>
+    <li><strong>Manipulación de logs en origen</strong>: borrado de logs y cambios de política de auditoría. Complementa R4, pero no es R4 en sentido estricto.</li>
+  </ul>
+
+  <p>
+    <strong>Para importarlo:</strong> en el menú del dashboard, <em>Dashboard management → Saved objects → Import</em>, selecciona el fichero <code>ens-opexp8-dashboard.ndjson</code>. Es un ejemplo: cada organización lo adapta a su infraestructura y a los servidores de su alcance.
+  </p>
+
+  <div style="background:rgba(245,158,11,0.08);border-left:4px solid rgba(245,158,11,0.55);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:0 0.5rem 0.5rem 0;">
+    <p class="m-0" style="color:rgba(255,255,255,0.85);max-width:none;"><strong style="color:#fcd34d;">Un panel vacío no significa que no pase nada.</strong> Significa que falta una fuente. Antes de interpretar el dashboard, comprueba la lista de abajo.</p>
+  </div>
+
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm" style="border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Panel</th>
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Qué necesita para tener datos</th>
+        </tr>
+      </thead>
+      <tbody style="color:rgba(255,255,255,0.8);">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px;font-weight:bold;">Logins en Windows</td>
+          <td style="padding:10px;">Canal <strong>Security</strong> en el agente y política "Auditar inicio de sesión" (éxito y error). Se comprueba con <code>auditpol /get /category:*</code>.</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px;font-weight:bold;">Logins y sudo en Linux</td>
+          <td style="padding:10px;"><code>/var/log/auth.log</code> (Debian/Ubuntu) o <code>/var/log/secure</code> (RHEL) como <code>&lt;localfile&gt;</code>.</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px;font-weight:bold;">Privilegios en Windows</td>
+          <td style="padding:10px;">Auditoría de "Uso de privilegios" (4672) y "Administración de grupos de seguridad" (4728).</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px;font-weight:bold;">Borrado de logs y política de auditoría</td>
+          <td style="padding:10px;">Windows: eventos 1102 y 4719. Linux: FIM (syscheck) sobre <code>/var/log</code>.</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px;font-weight:bold;">NAS y red</td>
+          <td style="padding:10px;">Syslog remoto hacia el manager, puerto 514 abierto y, si el fabricante no está soportado, decodificadores propios.</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;font-weight:bold;">Todos</td>
+          <td style="padding:10px;"><strong>NTP correcto</strong> en todos los orígenes y en el manager. Sin hora fiable, el orden de los eventos tampoco lo es.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>R2: la hora la sincroniza NTP, Wazuh vigila que nadie la cambie</h2>
+
+  <p>
+    Wazuh no sincroniza relojes: eso es trabajo de NTP en cada sistema. Lo que sí puede hacer es alertar de que alguien cambie la hora. En Windows se usa el evento <strong>4616</strong> (cambio de hora del sistema), que requiere auditar esa categoría en la política. En Linux se usa auditd con una regla sobre las llamadas que modifican el reloj, leyendo <code>/var/log/audit/audit.log</code> con <code>log_format audit</code>. Es el panel "Cambios de hora" del dashboard.
+  </p>
+
+  <h2>R3: la retención es un documento, y además hay que cumplirla</h2>
+
+  <p>
+    R3 no se activa con una opción: es un <strong>documento</strong> que dice qué eventos se auditan y cuánto tiempo se guardan. La plantilla Word tiene cuatro tablas (<strong>Windows, Linux, NAS y plataforma Wazuh</strong>) con las columnas: qué se guarda, de qué log sale, tipo, agente o sistema, retención online y retención total.
+  </p>
+  <p>
+    Los plazos de la plantilla son <strong>ejemplos</strong>: el ENS no fija un plazo, pide que esté escrito y que se cumpla. Un consejo práctico: <strong>empieza este documento al principio de la implantación de Wazuh</strong>, no cuando ya esté todo funcionando. Cada vez que añadas un equipo, lo apuntas en ese momento (qué logs recoge, de qué tipo y cuánto se guardan). Reconstruirlo al final, con decenas de agentes, es mucho más difícil y se olvidan cosas.
+  </p>
+  <p>
+    Para demostrar que se cumple, una política ISM en <em>Index Management</em> borra los índices <code>wazuh-alerts-*</code> al superar el plazo; hay que aplicarla a esos índices. El valor de <code>395d</code> es solo un ejemplo; el tuyo sale de tu política de seguridad.
+  </p>
+  <pre><code>{ismPolicy}</code></pre>
+
+  <h2>R4: control de acceso a los registros</h2>
+
+  <p>
+    R4 pide que los registros <strong>y sus copias de seguridad</strong> solo los pueda acceder o eliminar personal autorizado. Es decir, hay que proteger <strong>el almacén de logs de Wazuh</strong>, no los logs de cada endpoint. Cuatro controles, cada uno con su evidencia:
+  </p>
+  <ol>
+    <li><strong>Roles en Wazuh</strong>: un analista de solo lectura frente al administrador. Es lo que se explica a continuación.</li>
+    <li><strong>Permisos en disco del manager</strong>: <code>ls -l /var/ossec/logs/alerts /var/ossec/logs/archives</code> debe mostrar propietario root:wazuh y sin acceso para otros.</li>
+    <li><strong>Copias de seguridad y snapshots</strong>: el repositorio solo accesible por la cuenta de administración, y saber quién puede borrarlo.</li>
+    <li><strong>Quién ha tocado Wazuh</strong>: auditoría del propio indexer, del dashboard y de la API.</li>
+  </ol>
+
+  <div style="background:rgba(245,158,11,0.08);border-left:4px solid rgba(245,158,11,0.55);padding:1rem 1.25rem;margin:1.5rem 0;border-radius:0 0.5rem 0.5rem 0;">
+    <p class="m-0" style="color:rgba(255,255,255,0.85);max-width:none;"><strong style="color:#fcd34d;">Wazuh no es inmutable.</strong> Un log indexado se puede borrar o modificar con el rol admin del indexer o con root en el manager. Además, un administrador local puede parar el agente o manipular el log antes de que se envíe. El administrador de un servidor no puede reescribir lo que ese servidor ya envió a Wazuh; quien sí puede es quien tenga acceso de administración a Wazuh, y por eso R4 consiste en <em>controlar ese acceso</em>. Refuerzos reales: snapshots en almacenamiento WORM (por ejemplo S3 con Object Lock), reenvío de alertas a un segundo destino, roles separados y auditoría del indexer.</p>
+  </div>
+
+  <h2>Cómo dar de alta un usuario de solo lectura en Wazuh 4.14</h2>
+
+  <p>
+    El objetivo es que quien consulta los registros (analista, auditor) pueda <strong>verlos pero no modificarlos ni borrarlos</strong>. Wazuh tiene <strong>dos sistemas de permisos</strong> y hay que configurar los dos:
+  </p>
+
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm" style="border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Capa</th>
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Qué protege</th>
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Dónde se configura</th>
+        </tr>
+      </thead>
+      <tbody style="color:rgba(255,255,255,0.8);">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px;font-weight:bold;">Indexer + Dashboard</td>
+          <td style="padding:10px;">Alertas indexadas, dashboards, objetos guardados</td>
+          <td style="padding:10px;">Indexer management → Security</td>
+        </tr>
+        <tr>
+          <td style="padding:10px;font-weight:bold;">API de Wazuh (RBAC)</td>
+          <td style="padding:10px;">Reglas, decodificadores, agentes, configuración, reinicio del manager</td>
+          <td style="padding:10px;">Server management → Security</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <strong>La trampa:</strong> por defecto el dashboard habla con la API siempre como <code>wazuh-wui</code> (administrador). Si no se activa <code>run_as</code>, un usuario "de solo lectura" del indexer <strong>sigue pudiendo cambiar cosas a través de la app de Wazuh</strong>. En nuestras pruebas, sin <code>run_as</code> el usuario pudo crear un grupo de agentes. Con <code>run_as</code>, la API aplica los permisos del usuario real.
+  </p>
+  <p>
+    En el ejemplo: usuario <code>analista</code>, rol del indexer <code>ens_readonly</code>, backend role <code>analista_ro</code> y regla de API <code>wui_analista_ro</code> asociada al rol <code>readonly</code>.
+  </p>
+
+  <h3>Desde la interfaz</h3>
+
+  <p style="max-width:none;font-size:0.9rem;opacity:0.8;">Los pasos equivalentes por API (más abajo) están comprobados en Wazuh 4.14. Los nombres de menú de la interfaz pueden variar ligeramente entre versiones.</p>
+
+  <ol>
+    <li>
+      <strong>Usuario.</strong> Menú ☰ → <em>Indexer management → Security → Internal users → Create internal user</em>. Usuario <code>analista</code>, una contraseña (no puede parecerse al nombre de usuario) y, en <em>Backend roles</em>, <code>analista_ro</code>.
+    </li>
+    <li>
+      <strong>Rol.</strong> <em>Security → Roles → Create role</em>, con nombre <code>ens_readonly</code>:
+      <ul>
+        <li><em>Cluster permissions</em>: <code>cluster_composite_ops_ro</code>.</li>
+        <li><em>Index permissions</em>: patrones <code>wazuh-alerts-*, wazuh-archives-*, wazuh-monitoring-*, wazuh-statistics-*, wazuh-states-*</code> con acción <code>read</code>. Segunda fila: <code>.kibana*</code> con <code>read</code> (sin ella el usuario entra, pero no puede abrir ningún dashboard).</li>
+        <li><em>Tenant permissions</em>: <code>global_tenant</code> con permiso de lectura.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Mapeo.</strong> <em>Security → Role mappings</em>, abre <code>ens_readonly</code> → <em>Map users</em>: <code>analista</code> y el backend role <code>analista_ro</code>. <strong>No mapees <code>kibana_read_only</code></strong>: aunque suena a lo que buscamos, oculta Discover y las apps de Wazuh ("Application Not Found"). El solo lectura ya lo dan los permisos de índice.
+    </li>
+    <li>
+      <strong>Rol de la API.</strong> Menú ☰ → <em>Server management → Security</em>, pestaña de mapeo de roles: crea la regla <code>wui_analista_ro</code> con <em>Find</em> <code>user_name</code> = <code>analista</code> y asígnala al rol <strong>readonly</strong>.
+    </li>
+    <li>
+      <strong><code>run_as</code>.</strong> Es el paso que más se olvida. Actívalo en la conexión de la API del dashboard (<em>Dashboard management → Server APIs → editar la conexión → Run as</em>) o por fichero, y <strong>reinicia el dashboard</strong>: sin reinicio, la app siguió usando el administrador.
+    </li>
+  </ol>
+
+  <h3>Desde la terminal</h3>
+
+  <p>
+    Los mismos pasos por API, útiles para repetirlos o automatizarlos. Exporta antes <code>INDEXER_PASS</code> con la clave del admin del indexer.
+  </p>
+
+  <p><strong>1. Rol del indexer</strong></p>
+  <pre><code>{crearRol}</code></pre>
+
+  <p><strong>2. Usuario</strong></p>
+  <pre><code>{crearUsuario}</code></pre>
+
+  <p><strong>3. Mapeo al rol</strong> (de nuevo, sin <code>kibana_read_only</code>)</p>
+  <pre><code>{mapeo}</code></pre>
+
+  <p><strong>4. API de Wazuh: ligar el usuario al rol readonly</strong></p>
+  <pre><code>{apiRol}</code></pre>
+  <p>La clave de <code>wazuh-wui</code> está en <code>/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml</code>.</p>
+
+  <p><strong>5. Activar run_as y reiniciar el dashboard</strong></p>
+  <pre><code>{runAs}</code></pre>
+
+  <h3>Cómo comprobar que funciona</h3>
+
+  <p>Entra como <code>analista</code> (elige el tenant <strong>Global</strong> si lo pregunta) y verifica. Estos fueron los resultados en nuestro laboratorio:</p>
+
+  <div class="overflow-x-auto my-6">
+    <table class="w-full text-sm" style="border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Prueba como analista</th>
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">Resultado</th>
+        </tr>
+      </thead>
+      <tbody style="color:rgba(255,255,255,0.8);">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;">Leer alertas, abrir un dashboard guardado, usar Discover</td><td style="padding:10px;">Permitido</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;">Borrar un índice, escribir un documento, <code>_delete_by_query</code></td><td style="padding:10px;"><strong>403</strong></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;">Crear o modificar objetos guardados (visualizaciones, dashboards)</td><td style="padding:10px;"><strong>403</strong></td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;">Crear un grupo de agentes desde la app</td><td style="padding:10px;"><strong>Denegado</strong> (Permission denied)</td></tr>
+        <tr><td style="padding:10px;">API directa: reiniciar el manager, editar <code>local_rules.xml</code>, borrar un agente</td><td style="padding:10px;"><strong>Permission Denied</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Para enseñarlo en una demo: con ese usuario, abre <em>Dev Tools</em> y lanza un <code>DELETE</code> sobre un índice <code>wazuh-alerts-4.x-…</code> (devuelve <code>403 security_exception</code>), y comprueba que en <em>Server management → Rules</em> no se puede editar ni guardar. Si algo falla, la causa habitual es <code>run_as</code> sin activar o sin reiniciar el dashboard.
+  </p>
+
+  <h2>R5: nivel alto</h2>
+
+  <p>
+    En el nivel alto se exige correlación y respuesta automática. Es el núcleo de Wazuh (reglas que correlacionan eventos y active response), pero queda fuera de este artículo; se trabaja en otras lecciones del curso.
+  </p>
+
+  <h2>Qué decir (y qué no) en una auditoría</h2>
+
+  <ul>
+    <li>Esto <strong>no hace los logs inmutables</strong>. R4 pide controlar quién puede acceder o eliminar, y esto lo demuestra.</li>
+    <li>Deja el rol de administrador de Wazuh en pocas personas, distintas de quienes administran los servidores.</li>
+    <li>Los plazos de la plantilla son ejemplos. Documenta los tuyos y cúmplelos.</li>
+    <li>El rol <code>own_index</code> que aparece en el usuario es un rol por defecto del indexer y no da acceso a los índices de Wazuh.</li>
+  </ul>
+
+  <h2>Preguntas frecuentes</h2>
+
+  <div class="faq-accordion">
+    <details class="faq-item">
+      <summary>
+        <span>¿Hace Wazuh que los registros sean inmutables para el ENS?</span>
+        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="faq-answer">
+        <p>No. Un log indexado en Wazuh se puede borrar o modificar con el rol de administrador del indexer o con root en el manager. R4 no exige inmutabilidad, exige que los registros y sus copias solo los acceda o elimine personal autorizado. Para inmutabilidad real hay que añadir snapshots en almacenamiento WORM, como S3 con Object Lock.</p>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary>
+        <span>¿Por qué un usuario de solo lectura del indexer puede seguir cambiando cosas en Wazuh?</span>
+        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="faq-answer">
+        <p>Porque Wazuh tiene dos sistemas de permisos: el plugin de seguridad del indexer y el RBAC de la API. Por defecto el dashboard habla con la API siempre como wazuh-wui (administrador). Si no se activa run_as, el usuario de solo lectura sigue pudiendo crear grupos de agentes o editar configuración a través de la app. Con run_as activado la API aplica los permisos del usuario real.</p>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary>
+        <span>¿Qué plazo de retención de logs hay que poner en el ENS?</span>
+        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="faq-answer">
+        <p>El ENS no fija un plazo universal: pide que el periodo esté definido y documentado, y que se cumpla. Los plazos de la plantilla Word (90 días online y 12 meses totales para autenticación, 180 días y 24 meses para cambios de cuentas y privilegios) son ejemplos que cada organización debe ajustar a su política de seguridad.</p>
+      </div>
+    </details>
+    <details class="faq-item">
+      <summary>
+        <span>¿Un panel vacío en el dashboard significa que no pasa nada?</span>
+        <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+      </summary>
+      <div class="faq-answer">
+        <p>No: normalmente significa que falta una fuente de datos. Por ejemplo, sin el canal Security en el agente de Windows o sin la política de auditoría de inicio de sesión, no llegarán los eventos 4624 y 4625 y el panel de logins saldrá vacío. Revisa la lista de comprobación antes de interpretar el dashboard.</p>
+      </div>
+    </details>
+  </div>
+
+  <hr />
+
+  <p class="text-sm text-base-600">
+    <strong>Artículos relacionados:</strong>
+  </p>
+  <ul class="text-sm">
+    <li><a href="/blog/op-exp-8-registro-actividad-ens">op.exp.8 ENS: Registro de la Actividad, qué exige y cómo cumplirlo</a></li>
+    <li><a href="/blog/op-exp-3-gestion-configuracion-segura-ens">op.exp.3 ENS: Configuración Segura</a></li>
+    <li><a href="/curso-wazuh">Curso de Wazuh en español, con módulo de ENS</a></li>
+  </ul>
+  <hr />
+
+  <div class="relative my-10">
+    <div class="absolute -inset-px rounded-2xl pointer-events-none" style="background:linear-gradient(135deg,rgba(139,92,246,0.5),rgba(99,102,241,0.3),rgba(59,130,246,0.4));filter:blur(1px);"></div>
+    <div class="relative rounded-2xl p-7 md:p-8" style="background:#0b1120;border:1px solid rgba(139,92,246,0.3);">
+      <p class="mb-3" style="color:#a5b4fc;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;max-width:none;">Curso de Wazuh</p>
+      <h3 class="mt-0 mb-3 text-xl md:text-2xl font-bold" style="color:#ffffff;">Esta lección, en vídeo y con el laboratorio</h3>
+      <p class="mb-6" style="color:rgba(255,255,255,0.72);">
+        El curso incluye la lección de op.exp.8 grabada paso a paso, con la plantilla de retención y el dashboard listos para usar.
+      </p>
+      <div class="flex flex-col sm:flex-row flex-wrap gap-3">
+        <a href="/curso-wazuh" style="color:#ffffff;background:linear-gradient(135deg,#7c3aed,#4f46e5);"
+          class="inline-flex items-center justify-center gap-2 px-6 py-3.5 font-bold rounded-xl no-underline transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 shadow-lg">
+          Ver el curso de Wazuh
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</BlogLayout>
