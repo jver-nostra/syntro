@@ -85,7 +85,24 @@ astro check     # type checking
 
 ## 🔍 Verificación visual
 
-Siempre usar **Playwright MCP** (`mcp__playwright__browser_*`) para confirmar cambios UI antes de dar la tarea por terminada. Nunca asumir cómo queda algo sin screenshot.
+Siempre usar **agent-browser** (CLI, vía Bash) para confirmar cambios UI antes de dar la tarea por terminada. Nunca asumir cómo queda algo sin screenshot.
+
+**Playwright está eliminado** (MCP, plugin `playwright-skill` y permisos): no usar `mcp__playwright__*`, `npx playwright` ni ninguna skill de Playwright. Solo agent-browser.
+
+```bash
+npm i -g agent-browser && agent-browser install   # una vez por máquina (descarga Chrome)
+pnpm dev                                          # en un comando aparte y en segundo plano
+agent-browser open http://localhost:4321/<ruta>
+agent-browser screenshot <ruta-absoluta>.png      # guardar fuera del repo y abrir la imagen para mirarla
+agent-browser scroll down 3000                    # para ver secciones largas; luego otro screenshot
+agent-browser get title                           # comprobación rápida de texto/estado
+agent-browser close --all
+agent-browser skills get core --full              # referencia completa de comandos (snapshot, click @ref, fill, eval…)
+```
+
+- `scroll` del CLI para moverse por la página; un `scrollIntoView` por `eval` puede no mover la vista.
+- No encadenar `pnpm dev` con `agent-browser` en la misma llamada de shell: la llamada se cuelga.
+- Las capturas son temporales: no meterlas en el repo ni en `public/`.
 
 ---
 

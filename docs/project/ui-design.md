@@ -78,4 +78,4 @@ Colores para callouts:
 
 ## Verificación Visual
 
-Antes de dar una tarea de UI por terminada: usar Playwright MCP para tomar screenshot y confirmar.
+Antes de dar una tarea de UI por terminada: usar agent-browser (ver CLAUDE.md, sección Verificación visual) para tomar screenshot y confirmar.
