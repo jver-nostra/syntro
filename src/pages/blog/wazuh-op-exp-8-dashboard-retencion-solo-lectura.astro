@@ -53,18 +53,6 @@ curl -sk -H "Authorization: Bearer $TOKEN" -X POST \\
 const runAs = `sudo sed -i 's/^\\(\\s*\\)run_as: false/\\1run_as: true/' /usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
 sudo systemctl restart wazuh-dashboard`;
 
-const ismPolicy = `PUT _plugins/_ism/policies/wazuh_retencion_ens
-{
-  "policy": {
-    "description": "Retención alertas op.exp.8 - ENS nivel medio",
-    "default_state": "hot",
-    "states": [
-      { "name": "hot", "actions": [],
-        "transitions": [{ "state_name": "delete", "conditions": { "min_index_age": "395d" } }] },
-      { "name": "delete", "actions": [{ "delete": {} }] }
-    ]
-  }
-}`;
 ---
 
 <BlogLayout
@@ -179,9 +167,8 @@ const ismPolicy = `PUT _plugins/_ism/policies/wazuh_retencion_ens
     Los plazos de la plantilla son <strong>ejemplos</strong>: el ENS no fija un plazo, pide que esté escrito y que se cumpla. Un consejo práctico: <strong>empieza este documento al principio de la implantación de Wazuh</strong>, no cuando ya esté todo funcionando. Cada vez que añadas un equipo, lo apuntas en ese momento (qué logs recoge, de qué tipo y cuánto se guardan). Reconstruirlo al final, con decenas de agentes, es mucho más difícil y se olvidan cosas.
   </p>
   <p>
-    Para demostrar que se cumple, una política ISM en <em>Index Management</em> borra los índices <code>wazuh-alerts-*</code> al superar el plazo; hay que aplicarla a esos índices. El valor de <code>395d</code> es solo un ejemplo; el tuyo sale de tu política de seguridad.
+    🔒 <a href="/curso-wazuh" style="color:#c4b5fd;font-weight:600;">Descarga la plantilla Word de eventos auditados y retención (incluida en el curso de Wazuh) →</a>
   </p>
-  <pre><code>{ismPolicy}</code></pre>
 
   <h2>R4: control de acceso a los registros</h2>
 
