@@ -5,6 +5,13 @@
       "destination": "/wazuh/"
     }
   ],
+  "redirects": [
+    {
+      "source": "/blog/wazuh-op-exp-8-dashboard-retencion-solo-lectura",
+      "destination": "/blog/op-exp-8-registro-actividad-cumplir-ens-wazuh",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/.well-known/api-catalog",
