@@ -36,5 +36,7 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    // descargables privados del aula (src/private) importables con ?inline
+    assetsInclude: ["**/*.docx", "**/*.ndjson"],
   },
 });
