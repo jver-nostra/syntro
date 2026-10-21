@@ -3,24 +3,25 @@ import BlogLayoutEn from "../../../layouts/BlogLayoutEn.astro";
 
 const faqSchema = [
   {
-    question: "When is the PHP2Shell patch released?",
-    answer: "PHP scheduled it for Wednesday 21 October 2026 at 14:00 UTC. The PHP team warned it could ship earlier if details went public or there was active exploitation, and both have already happened."
+    question: "Which PHP version fixes PHP2Shell?",
+    answer: "PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35, released on 21 October 2026. Any earlier version is vulnerable. For PHP 7.4, 8.0 and 8.1 the PHP team published source backports, and Linux distributions and LTS vendors received the patches in advance."
   },
   {
     question: "Is my server vulnerable to PHP2Shell?",
-    answer: "If it serves PHP reachable from the internet, most likely yes. According to Sansec and Flare, every version from PHP 5.4 to the current ones is affected, including 8.2.34, 8.3.35, 8.4.26 and 8.5.11. Branches 8.1 and older will not get a patch."
+    answer: "If it serves PHP over the web and isn't on one of the fixed versions, yes. It affects Apache with mod_php (the most serious case, with exploitation demonstrated before any application code runs), PHP-FPM, php-cgi, FrankenPHP and LiteSpeed."
   },
   {
     question: "What should I do if I can't update today?",
-    answer: "Apply layered mitigations: block multipart/form-data at the web server, disable session.upload_progress, use a WAF without leaving the origin directly reachable, or take the application offline. None of them replaces the patch."
+    answer: "Apply the interim mitigations from the official advisory: memory_limit=-1 enforced by the administrator, request size limits, session.upload_progress.enabled=0 and, on PHP 8.5, fatal_error_backtraces=0, restarting every worker. Block multipart/form-data at the web server if the application doesn't use it. None of them replaces updating."
   }
 ];
 ---
 
 <BlogLayoutEn
-  title="Does Your Website Run PHP? It Could Be Attacked Today"
-  description="PHP2Shell: PHP ships a patch today for two critical code execution flaws already being exploited. Which servers are at risk and what to do in the next hours."
+  title="Does Your Website Run PHP? Update Today or Risk an Attack"
+  description="PHP2Shell: PHP has released the patch for two critical code execution flaws already being exploited. Which versions to install, who is at risk and what to do today."
   publishDate="2026-10-21"
+  modifiedDate="2026-10-21"
   author="AI Security"
   readTime="4 min"
   tags={["PHP", "Vulnerabilities", "CVE", "Alert", "Cybersecurity"]}
@@ -29,21 +30,21 @@ const faqSchema = [
 
   <div class="my-6 rounded-xl p-5" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.45);">
     <p style="max-width:none;margin:0;color:#fecaca;">
-      <strong style="color:#ffffff;">Critical alert · 21 October 2026.</strong> PHP releases a patch today at <strong style="color:#ffffff;">14:00 UTC</strong> for two remote code execution vulnerabilities in the interpreter itself. Exploitation is already underway. If you run PHP exposed to the internet, your server is at risk <strong style="color:#ffffff;">right now</strong>.
+      <strong style="color:#ffffff;">Critical alert · updated 21 October 2026.</strong> PHP has released the patch: <strong style="color:#ffffff;">8.5.12, 8.4.27, 8.3.36 and 8.2.35</strong>. Exploitation is active and, now that the fixed code is public, automated attacks are ramping up. If you run PHP exposed to the internet, <strong style="color:#ffffff;">update today</strong>.
     </p>
   </div>
 
   <p>
-    They are called <strong>PHP2Shell</strong>: <strong>CVE-2026-109618</strong> and <strong>CVE-2026-109619</strong>, both rated CVSS v4.0 <strong>9.2 (critical)</strong>. They let an attacker <strong>with no credentials</strong> run code on the server with a single HTTP request, on default PHP installs. Your application doesn't need to have any bug: the problem is in PHP, before your code even runs.
+    They are called <strong>PHP2Shell</strong>: <strong>CVE-2026-109618</strong> and <strong>CVE-2026-109619</strong>, both rated CVSS v4.0 <strong>9.2 (critical)</strong>. They let an attacker <strong>with no credentials</strong> run code on the server through HTTP requests. Your application doesn't need to have any bug: the problem is in PHP itself, and on Apache with mod_php the attack has been demonstrated <strong>before a single line of your application runs</strong>.
   </p>
 
   <h2>Why this one is serious</h2>
 
   <ul>
     <li><strong>Details leaked before the patch.</strong> PHP had to bring the notice forward to 20 October and the release to the 21st.</li>
-    <li><strong>It is already being exploited.</strong> Cloudflare saw the first attacks at 07:43 UTC on 21 October, and Aikido confirmed real exploitation that same morning. Public proofs of concept are circulating.</li>
-    <li><strong>It affects almost everything.</strong> According to Sansec and Flare, every version since PHP 5.4. That includes WordPress, WooCommerce, Magento, Shopware, Laravel, Drupal, PrestaShop and any PHP website or panel.</li>
-    <li><strong>Mass attacks arrive within minutes.</strong> Sansec expects automated scanning less than 15 minutes after the patch ships, once the fixed code reveals exactly where the flaw is.</li>
+    <li><strong>It is already being exploited.</strong> Cloudflare saw the first attacks at 07:43 UTC on 21 October, hours before the patch, and Aikido confirmed real exploitation that same morning.</li>
+    <li><strong>It affects almost everything.</strong> The official advisory treats any version before the fixed ones as vulnerable. That includes WordPress, WooCommerce, Magento, Shopware, Laravel, Drupal, PrestaShop and any PHP website or panel.</li>
+    <li><strong>The flaw is now public.</strong> With the fixed code published, anyone can see exactly what was changed. Sansec expected mass scanning within minutes of the release.</li>
     <li><strong>Organisations are switching services off.</strong> In the Netherlands, Tweakers, the Tweede Kamer and the NCSC took websites offline as a precaution.</li>
   </ul>
 
@@ -54,30 +55,33 @@ const faqSchema = [
       <thead>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
           <th style="padding:10px;text-align:left;color:#c4b5fd;">Your PHP version</th>
-          <th style="padding:10px;text-align:left;color:#c4b5fd;">Status</th>
+          <th style="padding:10px;text-align:left;color:#c4b5fd;">What to install</th>
         </tr>
       </thead>
       <tbody style="color:rgba(255,255,255,0.8);">
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.2 · 8.3 · 8.4 · 8.5</td><td style="padding:10px;">Vulnerable until you install today's fixed release. The latest versions published before the patch (8.2.34, 8.3.35, 8.4.26, 8.5.11) <strong>are still vulnerable</strong>.</td></tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.1 · 8.0</td><td style="padding:10px;"><strong>Vulnerable with no official patch</strong>. End of life.</td></tr>
-        <tr><td style="padding:10px;font-weight:bold;">7.x and older</td><td style="padding:10px;"><strong>Vulnerable with no official patch</strong>.</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.5</td><td style="padding:10px;"><strong>8.5.12</strong> or later</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.4</td><td style="padding:10px;"><strong>8.4.27</strong> or later</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.3</td><td style="padding:10px;"><strong>8.3.36</strong> or later</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.2</td><td style="padding:10px;"><strong>8.2.35</strong> or later (end of life on 31 Dec 2026)</td></tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);"><td style="padding:10px;font-weight:bold;">8.1 · 8.0 · 7.4</td><td style="padding:10px;">No official release. Your distribution's or LTS vendor's fixed package, or build from the <a href="https://www.php.net/archive/2026.php" rel="noopener" target="_blank">source backports</a> PHP has published. And plan a move to 8.2+.</td></tr>
+        <tr><td style="padding:10px;font-weight:bold;">7.3 and older</td><td style="padding:10px;"><strong>No public fix</strong>. Isolate the server and migrate.</td></tr>
       </tbody>
     </table>
   </div>
 
   <p>
-    Being on "a modern version" <strong>does not protect you</strong>. Until today at 14:00 UTC there is no fixed PHP version at all.
+    Risk is highest on <strong>Apache with mod_php</strong>, where PHP demonstrated full exploitation. PHP-FPM, php-cgi, FrankenPHP and LiteSpeed are affected too.
   </p>
 
   <h2>What to do today, in this order</h2>
 
   <ol>
     <li><strong>Take inventory now.</strong> List every server, hosting account and container running PHP reachable from the internet, including forgotten admin panels and old websites.</li>
-    <li><strong>Mitigate before 14:00 UTC.</strong> Don't wait for the patch: block <code>multipart/form-data</code> requests in nginx or Apache, disable <code>session.upload_progress</code> and, if you use Cloudflare, close direct access to your origin server. We explain it step by step, with copy-paste configuration, in <a href="/blog/php2shell-cve-2026-109618-mitigar-sin-parche" hreflang="es">PHP2Shell: how to mitigate it without a patch</a> (in Spanish; the config blocks work as-is).</li>
-    <li><strong>Switch off anything non-essential.</strong> A corporate website down for a few hours costs less than a compromised server.</li>
-    <li><strong>Update as soon as the patch ships.</strong> Install the new release for your branch (or your distribution's package as soon as it is published) and <strong>restart PHP-FPM or Apache</strong>: without a restart the vulnerable binary keeps running.</li>
-    <li><strong>If you are on 8.1 or older</strong>, plan the migration to 8.2+ today and keep the mitigations or isolation in place until it's done.</li>
-    <li><strong>Check whether you've already been breached.</strong> Look for new or modified PHP files, web shells, new admin users and unusual outbound connections.</li>
+    <li><strong>Update.</strong> Install the fixed release for your branch or your distribution's updated package (they received the patch in advance). If you rely on the Remi repository, PHP warns it won't have updates today: switch to distribution packages or build from source.</li>
+    <li><strong>Restart PHP-FPM or Apache.</strong> Without a restart the vulnerable binary keeps running. The same goes for Octane, queue workers and any long-running PHP process.</li>
+    <li><strong>Check the version your website actually serves</strong>, not the terminal one: <code>php -v</code> can show a different version from the one Apache or FPM uses.</li>
+    <li><strong>If you can't update today</strong>, apply the interim mitigations from the official advisory. We explain them step by step, with copy-paste configuration, in <a href="/blog/php2shell-cve-2026-109618-mitigar-sin-parche" hreflang="es">PHP2Shell: how to mitigate it if you can't update yet</a> (in Spanish; the config blocks work as-is). And switch off anything non-essential.</li>
+    <li><strong>Check whether you've already been breached.</strong> Exploitation started before the patch: look for new or modified PHP files, web shells, new admin users and unusual outbound connections.</li>
   </ol>
 
   <p>
@@ -89,11 +93,11 @@ const faqSchema = [
   <div class="faq-accordion">
     <details class="faq-item">
       <summary>
-        <span>When is the PHP2Shell patch released?</span>
+        <span>Which PHP version fixes PHP2Shell?</span>
         <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
       </summary>
       <div class="faq-answer">
-        <p>PHP scheduled it for Wednesday 21 October 2026 at 14:00 UTC. The PHP team warned it could ship earlier if details went public or there was active exploitation, and both have already happened.</p>
+        <p>PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35, released on 21 October 2026. Any earlier version is vulnerable. For PHP 7.4, 8.0 and 8.1 the PHP team published source backports, and Linux distributions and LTS vendors received the patches in advance.</p>
       </div>
     </details>
     <details class="faq-item">
@@ -102,7 +106,7 @@ const faqSchema = [
         <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
       </summary>
       <div class="faq-answer">
-        <p>If it serves PHP reachable from the internet, most likely yes. According to Sansec and Flare, every version from PHP 5.4 to the current ones is affected, including 8.2.34, 8.3.35, 8.4.26 and 8.5.11. Branches 8.1 and older will not get a patch.</p>
+        <p>If it serves PHP over the web and isn't on one of the fixed versions, yes. It affects Apache with mod_php (the most serious case, with exploitation demonstrated before any application code runs), PHP-FPM, php-cgi, FrankenPHP and LiteSpeed.</p>
       </div>
     </details>
     <details class="faq-item">
@@ -111,7 +115,7 @@ const faqSchema = [
         <svg class="faq-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
       </summary>
       <div class="faq-answer">
-        <p>Apply layered mitigations: block multipart/form-data at the web server, disable session.upload_progress, use a WAF without leaving the origin directly reachable, or take the application offline. None of them replaces the patch.</p>
+        <p>Apply the interim mitigations from the official advisory: memory_limit=-1 enforced by the administrator, request size limits, session.upload_progress.enabled=0 and, on PHP 8.5, fatal_error_backtraces=0, restarting every worker. Block multipart/form-data at the web server if the application doesn't use it. None of them replaces updating.</p>
       </div>
     </details>
   </div>
@@ -120,28 +124,33 @@ const faqSchema = [
 
   <p class="text-sm text-base-600"><strong>Sources:</strong></p>
   <ul class="text-sm">
-    <li><a href="https://www.php.net/archive/2026.php" rel="noopener" target="_blank">PHP: upcoming security release notice</a></li>
+    <li><a href="https://www.php.net/archive/2026.php" rel="noopener" target="_blank">PHP: 21 October 2026 security release</a></li>
+    <li><a href="https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w" rel="noopener" target="_blank">CVE-2026-109618 advisory (GHSA-w8hw-w9fx-j79w)</a></li>
+    <li><a href="https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp" rel="noopener" target="_blank">CVE-2026-109619 advisory (GHSA-6wmf-4rv5-p3rp)</a></li>
     <li><a href="https://sansec.io/research/php2shell" rel="noopener" target="_blank">Sansec: Critical PHP RCE (CVE-2026-109618 and 109619)</a></li>
     <li><a href="https://www.aikido.dev/blog/critical-vulnerabilities-in-php-php2shell" rel="noopener" target="_blank">Aikido: PHP2Shell</a></li>
-    <li><a href="https://flareapp.io/blog/a-critical-php-vulnerability-what-we-did-and-what-you-should-do" rel="noopener" target="_blank">Flare: what we did and what you should do</a></li>
   </ul>
   <hr />
 
   <div class="relative my-10">
     <div class="absolute -inset-px rounded-2xl pointer-events-none" style="background:linear-gradient(135deg,rgba(139,92,246,0.5),rgba(99,102,241,0.3),rgba(59,130,246,0.4));filter:blur(1px);"></div>
     <div class="relative rounded-2xl p-7 md:p-8" style="background:#0b1120;border:1px solid rgba(139,92,246,0.3);">
-      <p class="mb-3" style="color:#a5b4fc;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;max-width:none;">Wazuh</p>
-      <h3 class="mt-0 mb-3 text-xl md:text-2xl font-bold" style="color:#ffffff;">Would you know if someone got into your server today?</h3>
+      <p class="mb-3" style="color:#a5b4fc;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;max-width:none;">Cybersecurity for businesses</p>
+      <h3 class="mt-0 mb-3 text-xl md:text-2xl font-bold" style="color:#ffffff;">Who patches your servers when something like this lands?</h3>
       <p class="mb-6" style="color:rgba(255,255,255,0.72);">
-        With Wazuh we monitor the commands your website runs and every change to its files, so an attack like PHP2Shell doesn't go unnoticed.
+        We protect your company's servers, firewall, email and devices, and monitor them with Wazuh, so a flaw like PHP2Shell doesn't catch you unpatched or go unnoticed.
       </p>
       <div class="flex flex-col sm:flex-row flex-wrap gap-3">
-        <a href="/en/wazuh" style="color:#ffffff;background:linear-gradient(135deg,#7c3aed,#4f46e5);"
+        <a href="/ciberseguridad" hreflang="es" style="color:#ffffff;background:linear-gradient(135deg,#7c3aed,#4f46e5);"
           class="inline-flex items-center justify-center gap-2 px-6 py-3.5 font-bold rounded-xl no-underline transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 shadow-lg">
-          See our Wazuh service
+          See our cybersecurity services
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
           </svg>
+        </a>
+        <a href="/en/wazuh" style="color:#e0e7ff;background:transparent;border:1px solid rgba(165,180,252,0.45);"
+          class="inline-flex items-center justify-center gap-2 px-6 py-3.5 font-bold rounded-xl no-underline transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5">
+          Detection with Wazuh
         </a>
       </div>
     </div>
