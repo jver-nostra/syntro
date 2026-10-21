@@ -43,6 +43,14 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">We update this section as news comes in. Times in UTC.</p>
 
+  <p><strong>21 Oct, 16:40 UTC · Ubuntu Pro fixes older LTS releases and Red Hat weighs in (no packages yet).</strong></p>
+  <ul>
+    <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-2</a>): fixed packages are now out for 20.04 (php7.4 <code>7.4.3-4ubuntu2.29+esm5</code>), 18.04 (php7.2), 16.04 (php7.0) and 14.04 (php5), but <strong>only with Ubuntu Pro</strong> (on 14.04, with the Legacy Support add-on). Without a subscription those releases remain exposed.</li>
+    <li><strong>Red Hat</strong> (<a href="https://access.redhat.com/security/cve/cve-2026-109618" rel="noopener" target="_blank">CVE page</a>) rates it <em>Important</em> (CVSS 3.1 of 8.1, preliminary). Its argument is that RHEL uses PHP-FPM rather than mod_php by default, which makes exploitation harder. No fixed packages yet and, according to Red Hat, no mitigation meets its criteria: the only complete fix is installing the fixed release once it ships.</li>
+    <li><strong>watchTowr</strong> (<a href="https://watchtowr.com/intelligence/php-cve-2026-109618-faq/" rel="noopener" target="_blank">FAQ</a>) confirms in-the-wild exploitation seen by its honeypot network on 21 October, with no volume figures. CISA has not yet added it to its KEV catalog of exploited vulnerabilities.</li>
+    <li><strong>Ondřej Surý's repository</strong> (<a href="https://codeberg.org/oerdnj/deb.sury.org/issues/145" rel="noopener" target="_blank">tracking thread</a>): users now see PHP 8.2.35 in the PPA for Ubuntu 22.04 (amd64). Launchpad has returned 503 errors under load, and ARM packages are still missing. No patch regressions have been reported.</li>
+  </ul>
+
   <p><strong>21 Oct, 14:45 UTC · Fixed packages are out for Ubuntu and Debian.</strong></p>
   <ul>
     <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-1</a>): 26.04 LTS with php8.5 <code>8.5.4-0ubuntu1.5</code>, 24.04 LTS with php8.3 <code>8.3.6-0ubuntu0.24.04.13</code> and 22.04 LTS with php8.1 <code>8.1.2-1ubuntu2.28</code>. Releases 20.04 and older are still "needs evaluation".</li>

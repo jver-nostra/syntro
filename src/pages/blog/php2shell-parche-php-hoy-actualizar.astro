@@ -43,6 +43,14 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">Actualizamos esta sección a medida que salen novedades. Horas en horario peninsular español.</p>
 
+  <p><strong>21-oct, 18:40 · Ubuntu Pro corrige las LTS antiguas y Red Hat se pronuncia (aún sin paquetes).</strong></p>
+  <ul>
+    <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-2</a>): ya hay paquetes corregidos para 20.04 (php7.4 <code>7.4.3-4ubuntu2.29+esm5</code>), 18.04 (php7.2), 16.04 (php7.0) y 14.04 (php5), pero <strong>solo con Ubuntu Pro</strong> (en 14.04, con el complemento Legacy Support). Sin suscripción, esas versiones siguen expuestas.</li>
+    <li><strong>Red Hat</strong> (<a href="https://access.redhat.com/security/cve/cve-2026-109618" rel="noopener" target="_blank">ficha del CVE</a>) lo califica como <em>Important</em> (CVSS 3.1 de 8.1, provisional). Su argumento es que RHEL usa por defecto PHP-FPM y no mod_php, lo que hace más difícil la explotación. Aún no hay paquetes corregidos y, según Red Hat, ninguna mitigación cumple sus criterios: la única solución completa es instalar la versión corregida cuando salga.</li>
+    <li><strong>watchTowr</strong> (<a href="https://watchtowr.com/intelligence/php-cve-2026-109618-faq/" rel="noopener" target="_blank">FAQ</a>) confirma explotación en internet detectada por su red de honeypots el 21 de octubre, sin dar volumen. CISA todavía no la ha incluido en su catálogo KEV de vulnerabilidades explotadas.</li>
+    <li><strong>Repositorio de Ondřej Surý</strong> (<a href="https://codeberg.org/oerdnj/deb.sury.org/issues/145" rel="noopener" target="_blank">hilo de seguimiento</a>): los usuarios ya ven PHP 8.2.35 en el PPA para Ubuntu 22.04 (amd64). Launchpad ha dado errores 503 por saturación, y los paquetes para ARM siguen sin llegar. No se han reportado regresiones del parche.</li>
+  </ul>
+
   <p><strong>21-oct, 16:45 · Ya hay paquetes corregidos en Ubuntu y Debian.</strong></p>
   <ul>
     <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-1</a>): 26.04 LTS con php8.5 <code>8.5.4-0ubuntu1.5</code>, 24.04 LTS con php8.3 <code>8.3.6-0ubuntu0.24.04.13</code> y 22.04 LTS con php8.1 <code>8.1.2-1ubuntu2.28</code>. Las versiones 20.04 y anteriores siguen "en evaluación".</li>
