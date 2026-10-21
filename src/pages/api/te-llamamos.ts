@@ -4,26 +4,34 @@ import { saveLead } from '../../lib/leads';
 
 const resend = new Resend(import.meta.env.RESEND_API_KEY);
 
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const data = await request.formData();
-    const telefono = data.get('telefono')?.toString().trim();
+    // Acepta "telefono" (footer) o "contacto" (teléfono o correo, CTAs del blog)
+    const contacto = (data.get('telefono') ?? data.get('contacto'))?.toString().trim();
+    const origen = data.get('origen')?.toString().trim().slice(0, 120) || 'el footer de aisecurity.es';
+    const esEmail = !!contacto && contacto.includes('@');
+    const telefono = esEmail ? undefined : contacto;
+    const email = esEmail ? contacto : undefined;
 
-    if (!telefono) {
+    if (!contacto || (esEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contacto))) {
       return new Response(
-        JSON.stringify({ error: 'El teléfono es obligatorio' }),
+        JSON.stringify({ error: 'Indica un teléfono o un correo válido' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    await saveLead({ source: 'te-llamamos', phone: telefono });
+    await saveLead({ source: 'te-llamamos', phone: telefono ?? null, email: email ?? null, extra: { origen } });
 
     const fecha = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' });
 
     await resend.emails.send({
       from: 'AI Security <info@aisecurity.es>',
       to: 'info@aisecurity.es',
-      subject: `📞 Solicitud de llamada: ${telefono}`,
+      subject: esEmail ? `✉️ Solicitud de contacto: ${email}` : `📞 Solicitud de llamada: ${telefono}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -41,12 +49,12 @@ export const POST: APIRoute = async ({ request }) => {
                     <td style="padding:32px 40px;">
                       <table role="presentation" style="width:100%;background:#eff6ff;border-radius:8px;border-left:4px solid #3b82f6;">
                         <tr><td style="padding:20px;">
-                          <p style="margin:0 0 12px;color:#1e3a5f;font-size:14px;"><strong>Teléfono:</strong> <span style="font-size:22px;font-weight:700;">${telefono}</span></p>
+                          <p style="margin:0 0 12px;color:#1e3a5f;font-size:14px;"><strong>${esEmail ? 'Correo' : 'Teléfono'}:</strong> <span style="font-size:22px;font-weight:700;">${escapeHtml(contacto)}</span></p>
                           <p style="margin:0;color:#1e3a5f;font-size:14px;"><strong>Fecha:</strong> ${fecha}</p>
                         </td></tr>
                       </table>
                       <p style="margin:24px 0 0;color:#64748b;font-size:13px;text-align:center;">
-                        Solicitud recibida desde el footer de aisecurity.es
+                        Solicitud recibida desde ${escapeHtml(origen)}
                       </p>
                     </td>
                   </tr>
@@ -56,7 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
           </body>
         </html>
       `,
-      text: `Solicitud de llamada\n\nTeléfono: ${telefono}\nFecha: ${fecha}`,
+      text: `Solicitud de contacto\n\n${esEmail ? 'Correo' : 'Teléfono'}: ${contacto}\nOrigen: ${origen}\nFecha: ${fecha}`,
     });
 
     return new Response(

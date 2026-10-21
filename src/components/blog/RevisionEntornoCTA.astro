@@ -1,0 +1,95 @@
+---
+// RevisionEntornoCTA — bloque final de blogs de vulnerabilidades: consultoría por horas
+// con formulario de teléfono o correo → /api/te-llamamos (lead source "te-llamamos").
+interface Props {
+  lang?: "es" | "en";
+  origen: string; // se envía en el correo interno para saber de qué post viene
+}
+const { lang = "es", origen } = Astro.props;
+
+const t = lang === "en"
+  ? {
+      eyebrow: "Hourly consulting",
+      title: "Want us to review and secure your environment?",
+      text: "We check your PHP servers, apply the patch or the mitigations and verify nobody got in. Leave your phone or email and we'll contact you today.",
+      label: "Phone or email",
+      placeholder: "+34 612 345 678 or you@company.com",
+      button: "Contact me today",
+      sending: "Sending...",
+      ok: "Got it. We'll contact you today.",
+      error: "Could not send. Please try again or email info@aisecurity.es.",
+      privacy: "We'll only use it to contact you about this request.",
+    }
+  : {
+      eyebrow: "Consultoría por horas",
+      title: "¿Quieres que revisemos y aseguremos tu entorno?",
+      text: "Revisamos tus servidores con PHP, aplicamos el parche o las mitigaciones y comprobamos que nadie haya entrado. Déjanos tu teléfono o tu correo y te contactamos hoy mismo.",
+      label: "Teléfono o correo",
+      placeholder: "612 345 678 o tu@empresa.com",
+      button: "Que me contacten hoy",
+      sending: "Enviando...",
+      ok: "Recibido. Te contactamos hoy mismo.",
+      error: "No se ha podido enviar. Inténtalo de nuevo o escribe a info@aisecurity.es.",
+      privacy: "Solo lo usaremos para contactarte sobre esta solicitud.",
+    };
+---
+
+<div class="relative my-10 not-prose">
+  <div class="absolute -inset-px rounded-2xl pointer-events-none" style="background:linear-gradient(135deg,rgba(139,92,246,0.5),rgba(99,102,241,0.3),rgba(59,130,246,0.4));filter:blur(1px);"></div>
+  <div class="relative rounded-2xl p-7 md:p-8" style="background:#0b1120;border:1px solid rgba(139,92,246,0.3);">
+    <p class="mb-3" style="color:#a5b4fc;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;max-width:none;">{t.eyebrow}</p>
+    <h3 class="mt-0 mb-3 text-xl md:text-2xl font-bold" style="color:#ffffff;">{t.title}</h3>
+    <p class="mb-6" style="color:rgba(255,255,255,0.72);max-width:none;">{t.text}</p>
+
+    <form class="rev-form flex flex-col sm:flex-row gap-3" data-ok={t.ok} data-error={t.error}>
+      <input type="hidden" name="origen" value={origen} />
+      <label class="sr-only" for={`rev-contacto-${lang}`}>{t.label}</label>
+      <input
+        id={`rev-contacto-${lang}`}
+        name="contacto"
+        type="text"
+        required
+        autocomplete="on"
+        placeholder={t.placeholder}
+        class="flex-1 px-4 py-3.5 rounded-xl text-base focus:outline-none"
+        style="background:#111827;border:1px solid rgba(165,180,252,0.35);color:#f9fafb;min-width:0;"
+      />
+      <button type="submit"
+        class="rev-btn inline-flex items-center justify-center gap-2 px-6 py-3.5 font-bold rounded-xl transition-all duration-200 hover:opacity-90 shadow-lg disabled:opacity-50"
+        style="color:#ffffff;background:linear-gradient(135deg,#7c3aed,#4f46e5);" data-sending={t.sending}>
+        {t.button}
+      </button>
+    </form>
+    <p class="rev-msg mt-3 hidden" style="max-width:none;font-size:0.95rem;" role="status"></p>
+    <p class="mt-3 mb-0" style="color:rgba(255,255,255,0.45);font-size:0.8rem;max-width:none;">
+      {t.privacy} <a href="/privacy" style="color:rgba(255,255,255,0.6);">{lang === "en" ? "Privacy policy" : "Política de privacidad"}</a>.
+    </p>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('.rev-form').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = form.querySelector<HTMLButtonElement>('.rev-btn')!;
+      const msg = form.parentElement!.querySelector<HTMLParagraphElement>('.rev-msg')!;
+      const label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = btn.dataset.sending ?? '...';
+      try {
+        const res = await fetch('/api/te-llamamos', { method: 'POST', body: new FormData(form) });
+        if (!res.ok) throw new Error();
+        form.classList.add('hidden');
+        msg.textContent = form.dataset.ok ?? '';
+        msg.style.color = '#86efac';
+        if (typeof (window as any).gtag === 'function') (window as any).gtag('event', 'generate_lead', { lead_source: 'revision_entorno_blog' });
+      } catch {
+        msg.textContent = form.dataset.error ?? '';
+        msg.style.color = '#fca5a5';
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+      msg.classList.remove('hidden');
+    });
+  });
+</script>
