@@ -60,6 +60,7 @@ export const TRANSLATIONS: Record<string, Locale[]> = {
   "/blog/como-monitorizar-tu-tenant-de-office365-registros-de-exchange-sharepoint": ["en"],
   "/blog/wazuh-mcp-server-claude-ia": ["en"],
   "/blog/ia-threat-hunting-wazuh": ["en"],
+  "/blog/php2shell-parche-php-hoy-actualizar": ["en"],
 };
 
 /** Detecta el locale a partir del pathname (/fr o /fr/... => fr). */
