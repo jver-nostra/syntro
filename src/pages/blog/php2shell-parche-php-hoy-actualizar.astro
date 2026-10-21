@@ -43,6 +43,15 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">Actualizamos esta sección a medida que salen novedades. Horas en horario peninsular español.</p>
 
+  <p><strong>21-oct, 22:40 · Ataque demostrado en WordPress, Drupal y Joomla, y cómo revisar la protección de Cloudflare.</strong></p>
+  <ul>
+    <li><strong>Wiz</strong>, que descubrió los fallos (<a href="https://www.wiz.io/blog/php2shell-php-rce" rel="noopener" target="_blank">análisis técnico</a>), ha demostrado la ejecución de código <strong>sin autenticar</strong> en las últimas versiones de <strong>WordPress, Drupal y Joomla</strong>. No hace falta ningún plugin vulnerable: basta con que corran sobre un PHP sin parchear. Wiz avisa de que probablemente existan más variantes.</li>
+    <li>Las señales que propone Wiz para detectar intentos son peticiones multipart raras seguidas de errores de <code>memory_limit</code>, errores 500 repetidos, cookies <code>PHPSESSID</code> anormalmente grandes o malformadas en las respuestas, y reinicios inexplicables de workers de PHP. Los logs de la aplicación pueden no mostrar nada, porque el fallo ocurre por debajo de ella.</li>
+    <li><strong>Cloudflare</strong> (<a href="https://blog.cloudflare.com/php-vulnerabilities-waf-protection/" rel="noopener" target="_blank">detalle de la protección</a>) activó sus reglas a las 05:02 del 21 de octubre, nueve horas antes del parche. Ha visto a los atacantes modificar los ataques para intentar esquivarlas. En los <strong>planes de pago</strong> hay que comprobar que el <em>Managed Ruleset</em> está en modo bloqueo. Los bloqueos se pueden revisar en <em>Security → Security Analytics → Events</em>, filtrando por las reglas "Anomalous Execution".</li>
+    <li><strong>CERT-FR</strong> (<a href="https://cert.cyber.gouv.fr/alerte/CERTFR-2026-ALE-014/" rel="noopener" target="_blank">CERTFR-2026-ALE-014</a>) ha actualizado su alerta con las versiones corregidas (8.2.35, 8.3.36, 8.4.27 y 8.5.12). Insiste en que las mitigaciones temporales no las ha validado y en que hay que aislar las ramas sin soporte.</li>
+    <li>Sin cambios: Debian aún no tiene paquete para bookworm (php8.2), Red Hat sigue sin publicar paquetes y CISA no la ha incluido en su catálogo KEV.</li>
+  </ul>
+
   <p><strong>21-oct, 18:40 · Ubuntu Pro corrige las LTS antiguas y Red Hat se pronuncia (aún sin paquetes).</strong></p>
   <ul>
     <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-2</a>): ya hay paquetes corregidos para 20.04 (php7.4 <code>7.4.3-4ubuntu2.29+esm5</code>), 18.04 (php7.2), 16.04 (php7.0) y 14.04 (php5), pero <strong>solo con Ubuntu Pro</strong> (en 14.04, con el complemento Legacy Support). Sin suscripción, esas versiones siguen expuestas.</li>

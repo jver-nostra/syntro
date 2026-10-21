@@ -43,6 +43,15 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">We update this section as news comes in. Times in UTC.</p>
 
+  <p><strong>21 Oct, 20:40 UTC · Attack demonstrated on WordPress, Drupal and Joomla, and how to check your Cloudflare protection.</strong></p>
+  <ul>
+    <li><strong>Wiz</strong>, which discovered the flaws (<a href="https://www.wiz.io/blog/php2shell-php-rce" rel="noopener" target="_blank">technical write-up</a>), demonstrated <strong>unauthenticated</strong> code execution on the latest <strong>WordPress, Drupal and Joomla</strong> releases. No vulnerable plugin is needed: running on an unpatched PHP is enough. Wiz warns that more variants likely exist.</li>
+    <li>Wiz's suggested signals for spotting attempts: unusual multipart requests followed by <code>memory_limit</code> errors, repeated 500 errors, unusually large or malformed <code>PHPSESSID</code> cookies in responses, and unexplained PHP worker restarts. Application logs may show nothing, because the flaw sits below the application.</li>
+    <li><strong>Cloudflare</strong> (<a href="https://blog.cloudflare.com/php-vulnerabilities-waf-protection/" rel="noopener" target="_blank">protection details</a>) turned its rules on at 03:02 UTC on 21 October, nine hours before the patch. It has seen attackers modify their attacks to try to evade them. On <strong>paid plans</strong>, check that the <em>Managed Ruleset</em> is in block mode. Blocks can be reviewed under <em>Security → Security Analytics → Events</em>, filtering by the "Anomalous Execution" rules.</li>
+    <li><strong>CERT-FR</strong> (<a href="https://cert.cyber.gouv.fr/alerte/CERTFR-2026-ALE-014/" rel="noopener" target="_blank">CERTFR-2026-ALE-014</a>) has updated its alert with the fixed versions (8.2.35, 8.3.36, 8.4.27 and 8.5.12). It stresses that it has not validated the temporary mitigations and that unsupported branches must be isolated.</li>
+    <li>Unchanged: Debian still has no package for bookworm (php8.2), Red Hat still has no packages and CISA has not added it to its KEV catalog.</li>
+  </ul>
+
   <p><strong>21 Oct, 16:40 UTC · Ubuntu Pro fixes older LTS releases and Red Hat weighs in (no packages yet).</strong></p>
   <ul>
     <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-2</a>): fixed packages are now out for 20.04 (php7.4 <code>7.4.3-4ubuntu2.29+esm5</code>), 18.04 (php7.2), 16.04 (php7.0) and 14.04 (php5), but <strong>only with Ubuntu Pro</strong> (on 14.04, with the Legacy Support add-on). Without a subscription those releases remain exposed.</li>
