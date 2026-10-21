@@ -38,6 +38,20 @@ const faqSchema = [
     Se llaman <strong>PHP2Shell</strong>: <strong>CVE-2026-109618</strong> y <strong>CVE-2026-109619</strong>, ambas con CVSS v4.0 <strong>9.2 (crítica)</strong>. Permiten que un atacante <strong>sin credenciales</strong> ejecute código en el servidor con peticiones HTTP. No hace falta que tu aplicación tenga ningún fallo: el problema está en el propio PHP, y en Apache con mod_php se ha demostrado el ataque <strong>antes de que se ejecute una sola línea de tu aplicación</strong>.
   </p>
 
+  <h2>Última hora</h2>
+
+  <p style="max-width:none;font-size:0.9rem;opacity:0.8;">Actualizamos esta sección a medida que salen novedades. Horas en horario peninsular español.</p>
+
+  <p><strong>21-oct, 16:45 · Ya hay paquetes corregidos en Ubuntu y Debian.</strong></p>
+  <ul>
+    <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-1</a>): 26.04 LTS con php8.5 <code>8.5.4-0ubuntu1.5</code>, 24.04 LTS con php8.3 <code>8.3.6-0ubuntu0.24.04.13</code> y 22.04 LTS con php8.1 <code>8.1.2-1ubuntu2.28</code>. Las versiones 20.04 y anteriores siguen "en evaluación".</li>
+    <li><strong>Debian</strong> (DSA-6574-1): trixie con php8.4 <code>8.4.27-1~deb13u1</code>. Para bookworm (php8.2) aún no hay aviso publicado.</li>
+    <li><strong>Repositorio de Ondřej Surý</strong> (sury.org, muy usado en Debian y Ubuntu): el mantenedor confirma parches para todas las ramas del repositorio, también las que ya no tienen soporte, y los usuarios ya reciben paquetes desde PHP 5.6 en amd64. Las compilaciones para ARM y el PPA de Ubuntu van con retraso.</li>
+    <li><strong>Red Hat</strong>: a esta hora no encontramos aviso ni paquetes publicados. <strong>Remi</strong> no tendrá actualizaciones hoy.</li>
+    <li>Ojo con los parches para PHP 7.4, 8.0 y 8.1 que ha publicado PHP: <strong>no son versiones nuevas que se descarguen de php.net</strong>, sino cambios mínimos en código fuente pensados para quien compila PHP a mano y para los proveedores de soporte extendido. Si no compilas, tu vía es el paquete de tu distribución o proveedor.</li>
+    <li><strong>CERT-FR</strong> (<a href="https://cert.cyber.gouv.fr/alerte/CERTFR-2026-ALE-014/" rel="noopener" target="_blank">CERTFR-2026-ALE-014</a>) confirma que desactivar <code>session.upload_progress</code> solo reduce la superficie de ataque de <strong>una</strong> de las dos vulnerabilidades. Recomienda bloquear las peticiones multipart (o vigilarlas si no se pueden bloquear) y aislar ya los servidores con ramas sin soporte.</li>
+  </ul>
+
   <h2>Por qué esta vez es grave</h2>
 
   <ul>

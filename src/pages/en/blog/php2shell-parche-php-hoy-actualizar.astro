@@ -38,6 +38,20 @@ const faqSchema = [
     They are called <strong>PHP2Shell</strong>: <strong>CVE-2026-109618</strong> and <strong>CVE-2026-109619</strong>, both rated CVSS v4.0 <strong>9.2 (critical)</strong>. They let an attacker <strong>with no credentials</strong> run code on the server through HTTP requests. Your application doesn't need to have any bug: the problem is in PHP itself, and on Apache with mod_php the attack has been demonstrated <strong>before a single line of your application runs</strong>.
   </p>
 
+  <h2>Latest updates</h2>
+
+  <p style="max-width:none;font-size:0.9rem;opacity:0.8;">We update this section as news comes in. Times in UTC.</p>
+
+  <p><strong>21 Oct, 14:45 UTC · Fixed packages are out for Ubuntu and Debian.</strong></p>
+  <ul>
+    <li><strong>Ubuntu</strong> (<a href="https://ubuntu.com/security/CVE-2026-109618" rel="noopener" target="_blank">USN-8948-1</a>): 26.04 LTS with php8.5 <code>8.5.4-0ubuntu1.5</code>, 24.04 LTS with php8.3 <code>8.3.6-0ubuntu0.24.04.13</code> and 22.04 LTS with php8.1 <code>8.1.2-1ubuntu2.28</code>. Releases 20.04 and older are still "needs evaluation".</li>
+    <li><strong>Debian</strong> (DSA-6574-1): trixie with php8.4 <code>8.4.27-1~deb13u1</code>. No advisory yet for bookworm (php8.2).</li>
+    <li><strong>Ondřej Surý's repository</strong> (sury.org, widely used on Debian and Ubuntu): the maintainer confirms fixes for every branch in the repository, including end-of-life ones, and users are already receiving packages back to PHP 5.6 on amd64. ARM builds and the Ubuntu PPA are lagging behind.</li>
+    <li><strong>Red Hat</strong>: at the time of writing we found no advisory or packages. <strong>Remi</strong> will not have updates today.</li>
+    <li>Note on the PHP 7.4, 8.0 and 8.1 fixes published by PHP: <strong>they are not new versions you download from php.net</strong>, but minimal source patches meant for people who build PHP themselves and for extended-support vendors. If you don't compile, your route is your distribution's or vendor's package.</li>
+    <li><strong>CERT-FR</strong> (<a href="https://cert.cyber.gouv.fr/alerte/CERTFR-2026-ALE-014/" rel="noopener" target="_blank">CERTFR-2026-ALE-014</a>) confirms that disabling <code>session.upload_progress</code> only reduces the attack surface of <strong>one</strong> of the two vulnerabilities. It recommends blocking multipart requests (or monitoring them if blocking isn't possible) and isolating servers on unsupported branches now.</li>
+  </ul>
+
   <h2>Why this one is serious</h2>
 
   <ul>
