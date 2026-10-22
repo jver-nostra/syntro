@@ -93,6 +93,8 @@ Flujo: análisis previo → desarrollo personalizado → formación del equipo �
 
 **Consultoría AI Act** (`/consultoria-ai-act`, sep 2026): mismo patrón visual que ENS/ISO 27001 (documental + técnica), adaptado al artículo 50 del Reglamento (UE) 2024/1689 (obligaciones de transparencia: avisos de IA en chatbots/agentes, marcado de contenido sintético), en vigor desde el 2 de agosto de 2026 sin periodo de gracia. No es una certificación con auditoría externa como ENS/ISO — es una obligación legal supervisada por la AESIA. Diferenciador: no solo el informe/inventario documental, también implementamos los avisos reales en el producto (chatbot, contenido generado), no solo un PDF. Mismas 3 modalidades sin precio público (técnica / documental / integral). Enlaza a los 3 posts de blog `ai-act-*` / `chatbots-ia-obligacion-legal-*` para el detalle legal completo. i18n pendiente (diferido, no crítico para el lanzamiento inicial).
 
+**Ciberseguridad con IA** (`/ciberseguridad`, rehecha el 22-oct-2026): sustituye al antiguo enfoque "defensa por capas" (firewall, M365, endpoints…). Concepto: *si te atacan con IA, defiéndete con IA*. Cada servidor/servicio de monitorización y protección (Wazuh, firewall, correo, M365/Workspace, WAF, backups) se conecta a una IA por APIs o MCP con permisos mínimos; la IA tiene el **contexto documentado de la empresa** (qué hace cada sistema, qué es normal) y analiza logs 24/7 como un "SOC" de apoyo. **Human in the loop siempre**: matriz de decisiones pactada por escrito (actúa sola en lo de bajo riesgo y reversible; propone y espera aprobación en lo que afecta al negocio; solo informa en lo crítico). Se vende como **consultoría** (diseño + acompañamiento por horas, el equipo del cliente implementa) o **implementación** completa; ambas sin precio público, con diagnóstico gratuito previo. Planes en `/presupuesto?plan=ciberseguridad-ia-{diagnostico|consultoria|implementacion}`. Wazuh suele ser la base para centralizar logs. Tono: sin humo, explicar límites (no sustituye al equipo, puede equivocarse, no arregla lo básico).
+
 **Soporte técnico** (`/soporte-tecnico` + geo): servicio remoto. Foco **secundario** ahora (ver `docs/seo/geo-posicionamiento.md`).
 
 Otros: administración Linux/Windows, backups (Veeam, Restic), afiliación Wazuh (`/wazuh-afiliado`).
@@ -149,6 +151,7 @@ Video YouTube → visita /wazuh → ve demo + pricing → solicita reunión
 - **Producción**: https://aisecurity.es
 - `/` — Homepage
 - `/wazuh` — Página Wazuh (alta prioridad, fuente YouTube)
+- `/ciberseguridad` — Ciberseguridad con IA (IA conectada a los sistemas, contexto de empresa, human in the loop)
 - `/consultoria-ens` — Consultoría ENS (adecuación RD 311/2022, documental + técnica con Wazuh)
 - `/consultoria-iso27001` — Consultoría ISO 27001 (mismo diseño que ENS, SGSI + Anexo A + Wazuh)
 - `/consultoria-ai-act` — Consultoría AI Act (adecuación artículo 50, avisos IA en chatbots + marcado de contenido)

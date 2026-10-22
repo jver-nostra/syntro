@@ -95,6 +95,13 @@ SERVICIOS DE CIBERSEGURIDAD Y SISTEMAS:
    - Implementación técnica real: avisos de IA en chatbots/agentes y marcado de contenido generado (no solo un informe en PDF)
    - Precio: consultar en el diagnóstico gratuito (no hay precio público)
 
+8b. Ciberseguridad con IA (/ciberseguridad)
+   - Idea: "si te atacan con IA, defiéndete con IA". Cada sistema (SIEM/Wazuh, firewall, correo, M365, WAF, servidores) se conecta a una IA por APIs o MCP, con permisos mínimos
+   - La IA tiene el contexto documentado de la empresa (qué hace cada sistema, qué es normal) y analiza logs y alertas 24/7
+   - Human in the loop: actúa sola solo en acciones pactadas de bajo riesgo; lo que afecta al negocio lo propone y espera aprobación humana; todo queda registrado
+   - Dos modalidades: consultoría (diseñamos y el equipo del cliente implementa) o implementación completa. Empieza con diagnóstico gratuito
+   - Precio: a consultar tras el diagnóstico (no hay precio público)
+
 9. Soporte IT y Administración de Sistemas (/servicios/desarrollo-web)
    - Administración Linux/Windows Server
    - Copias de seguridad automatizadas (Veeam, Restic, Duplicati)
@@ -131,7 +138,8 @@ PÁGINAS DE REDIRECCIÓN:
 - Contacto general: /contacto (PREFERENTE — usa esta por defecto para que el cliente contacte)
 - Agendar reunión gratuita: /reunion
 - Ver servicios de IA: /servicios/chatbot, /servicios/gestor-documental, /servicios/automatizacion, /servicios/atencion-llamadas
-- Wazuh y ciberseguridad: /wazuh
+- Wazuh: /wazuh
+- Ciberseguridad con IA (IA que vigila 24/7 con aprobación humana): /ciberseguridad
 - Curso Wazuh: /curso-wazuh
 - Consultoría AI Act (artículo 50): /consultoria-ai-act
 - Desarrollo Web: /servicios/desarrollo-web
