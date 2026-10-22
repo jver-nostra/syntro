@@ -59,6 +59,13 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">Actualizamos esta sección a medida que salen novedades. Horas en horario peninsular español.</p>
 
+  <p><strong>22-oct, 20:05 · Más de 28.000 servidores en España siguen anunciando una versión de PHP sin el parche.</strong></p>
+  <ul>
+    <li>Una búsqueda en <a href="https://www.shodan.io/" rel="noopener" target="_blank">Shodan</a>, el buscador que indexa servidores expuestos a internet, hecha el 22 de octubre por la mañana devuelve <strong>28.364 servidores en España</strong> que responden con la cabecera <code>X-Powered-By: PHP</code> y una versión distinta de las corregidas (8.5.12, 8.4.27, 8.3.36 y 8.2.35). Por ciudades: Madrid (8.421), Zaragoza (3.713), Valencia (2.005), Barcelona (1.543) y Getafe (1.164). Entre los resultados aparecen versiones como PHP 8.3.14 y PHP 7.4.13, esta última sin soporte desde hace años.</li>
+    <li>Es una <strong>aproximación</strong>, no un recuento exacto. Por un lado sobran servidores: las distribuciones parchean sin cambiar el número de versión (un Ubuntu 24.04 ya corregido sigue diciendo PHP 8.3.6), así que algunos ya están protegidos. Por otro faltan: los servidores que ocultan la cabecera no aparecen.</li>
+    <li>Lo que sí demuestra es que a un atacante le resulta muy fácil sacar la lista de servidores que anuncian una versión vulnerable. Si tu servidor publica la versión de PHP, ocúltala con <code>expose_php = Off</code> en <code>php.ini</code>. No te protege del fallo, pero te saca de esa lista. Lo que te protege es actualizar.</li>
+  </ul>
+
   <p><strong>22-oct, 18:40 · Red Hat empieza a publicar paquetes y avisa de que también afecta a sus contenedores.</strong></p>
   <ul>
     <li><strong>Red Hat</strong> (<a href="https://access.redhat.com/security/vulnerabilities/RHSB-2026-013" rel="noopener" target="_blank">boletín RHSB-2026-013</a>, actualizado el 22-oct): afecta a <strong>RHEL 8, 9 y 10</strong>, a OpenShift Dev Spaces y a todo lo que use el paquete php de RHEL, incluidas las imágenes de contenedor UBI. Ya hay algunas actualizaciones disponibles y otras en camino. Si usas contenedores basados en RHEL o UBI, hay que <strong>reconstruirlos</strong> cuando se actualice la imagen base.</li>
@@ -101,6 +108,7 @@ const faqSchema = [
     <li><strong>Ya se está explotando.</strong> Cloudflare detectó los primeros ataques a las 07:43 UTC del 21 de octubre, horas antes del parche, y Aikido confirmó explotación real esa misma mañana.</li>
     <li><strong>Afecta a casi todo.</strong> El aviso oficial da por vulnerable cualquier versión anterior a las corregidas. Eso incluye WordPress, WooCommerce, Magento, Shopware, Laravel, Drupal, PrestaShop y cualquier web o panel en PHP.</li>
     <li><strong>Ahora el fallo es público.</strong> Con el código corregido publicado, cualquiera puede ver exactamente qué se ha arreglado. Sansec esperaba escaneos masivos a los pocos minutos de la publicación.</li>
+    <li><strong>Hay miles de servidores expuestos en España.</strong> Un día después del parche, una búsqueda en <a href="https://www.shodan.io/" rel="noopener" target="_blank">Shodan</a> encuentra más de 28.000 servidores en España que anuncian una versión de PHP sin corregir (detalle en la entrada de "Última hora" del 22-oct, 20:05).</li>
     <li><strong>Hay organizaciones apagando servicios.</strong> En Países Bajos, Tweakers, la Tweede Kamer y el NCSC desconectaron webs por precaución.</li>
   </ul>
 
