@@ -43,6 +43,14 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">We update this section as news comes in. Times in UTC.</p>
 
+  <p><strong>22 Oct, 16:40 UTC · Red Hat starts shipping packages and warns its containers are affected too.</strong></p>
+  <ul>
+    <li><strong>Red Hat</strong> (<a href="https://access.redhat.com/security/vulnerabilities/RHSB-2026-013" rel="noopener" target="_blank">bulletin RHSB-2026-013</a>, updated 22 Oct): it affects <strong>RHEL 8, 9 and 10</strong>, OpenShift Dev Spaces and anything using the RHEL php package, including UBI container images. Some updates are already available and more are on the way. If you run RHEL- or UBI-based containers, <strong>rebuild them</strong> once the base image is updated.</li>
+    <li>According to Red Hat, with PHP-FPM (the RHEL default) code execution is difficult in practice, because the worker exits before reaching the corrupted data. Servers running <strong>mod_php</strong> are at higher risk. It has not yet published its own mitigation.</li>
+    <li><strong>Ondřej Surý's repository</strong> (<a href="https://codeberg.org/oerdnj/deb.sury.org/issues/145" rel="noopener" target="_blank">tracking thread</a>): the maintainer confirms Ubuntu 16.04 will not get packages. He also warns that the alleged exploit circulating as <code>php-up-2026.tar.gz</code> <strong>is not validated</strong> and should be treated as untrusted: don't run it on your servers.</li>
+    <li>Unchanged: Debian still has no package for bookworm (php8.2), PHP has published no new releases or regressions, and CISA has not added it to its KEV catalog.</li>
+  </ul>
+
   <p><strong>21 Oct, 20:40 UTC · Attack demonstrated on WordPress, Drupal and Joomla, and how to check your Cloudflare protection.</strong></p>
   <ul>
     <li><strong>Wiz</strong>, which discovered the flaws (<a href="https://www.wiz.io/blog/php2shell-php-rce" rel="noopener" target="_blank">technical write-up</a>), demonstrated <strong>unauthenticated</strong> code execution on the latest <strong>WordPress, Drupal and Joomla</strong> releases. No vulnerable plugin is needed: running on an unpatched PHP is enough. Wiz warns that more variants likely exist.</li>

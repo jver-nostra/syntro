@@ -59,6 +59,14 @@ const faqSchema = [
 
   <p style="max-width:none;font-size:0.9rem;opacity:0.8;">Actualizamos esta sección a medida que salen novedades. Horas en horario peninsular español.</p>
 
+  <p><strong>22-oct, 18:40 · Red Hat empieza a publicar paquetes y avisa de que también afecta a sus contenedores.</strong></p>
+  <ul>
+    <li><strong>Red Hat</strong> (<a href="https://access.redhat.com/security/vulnerabilities/RHSB-2026-013" rel="noopener" target="_blank">boletín RHSB-2026-013</a>, actualizado el 22-oct): afecta a <strong>RHEL 8, 9 y 10</strong>, a OpenShift Dev Spaces y a todo lo que use el paquete php de RHEL, incluidas las imágenes de contenedor UBI. Ya hay algunas actualizaciones disponibles y otras en camino. Si usas contenedores basados en RHEL o UBI, hay que <strong>reconstruirlos</strong> cuando se actualice la imagen base.</li>
+    <li>Según Red Hat, con PHP-FPM (lo habitual en RHEL) la ejecución de código es difícil en la práctica, porque el worker termina antes de llegar a los datos corruptos. Los servidores con <strong>mod_php</strong> están en mayor riesgo. Aún no ha publicado una mitigación propia.</li>
+    <li><strong>Repositorio de Ondřej Surý</strong> (<a href="https://codeberg.org/oerdnj/deb.sury.org/issues/145" rel="noopener" target="_blank">hilo de seguimiento</a>): el mantenedor aclara que Ubuntu 16.04 no tendrá paquetes. También avisa de que el supuesto exploit que circula como <code>php-up-2026.tar.gz</code> <strong>no está validado</strong> y debe tratarse como no fiable: no lo ejecutes en tus servidores.</li>
+    <li>Sin cambios: Debian sigue sin paquete para bookworm (php8.2), PHP no ha publicado nuevas versiones ni regresiones y CISA no la ha incluido en su catálogo KEV.</li>
+  </ul>
+
   <p><strong>21-oct, 22:40 · Ataque demostrado en WordPress, Drupal y Joomla, y cómo revisar la protección de Cloudflare.</strong></p>
   <ul>
     <li><strong>Wiz</strong>, que descubrió los fallos (<a href="https://www.wiz.io/blog/php2shell-php-rce" rel="noopener" target="_blank">análisis técnico</a>), ha demostrado la ejecución de código <strong>sin autenticar</strong> en las últimas versiones de <strong>WordPress, Drupal y Joomla</strong>. No hace falta ningún plugin vulnerable: basta con que corran sobre un PHP sin parchear. Wiz avisa de que probablemente existan más variantes.</li>
