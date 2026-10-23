@@ -17,7 +17,7 @@
 -- =====================================================
 CREATE TABLE leads (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  source TEXT NOT NULL,              -- 'contacto' | 'migracion' | 'demo-wazuh' | 'te-llamamos' | 'ticket-soporte' | 'reunion' | 'partner' | 'passbolt' | 'inscripcion-curso-wazuh' | 'lista-espera-wazuh-en' | 'lista-espera-techai-boost' | 'lista-espera-seo-geo'
+  source TEXT NOT NULL,              -- 'contacto' | 'migracion' | 'demo-wazuh' | 'te-llamamos' | 'ticket-soporte' | 'reunion' | 'partner' | 'passbolt' | 'inscripcion-curso-wazuh' | 'lista-espera-wazuh-en' | 'lista-espera-techai-boost' | 'lista-espera-seo-geo' | 'manual'
   lang TEXT NOT NULL DEFAULT 'es' CHECK (lang IN ('es', 'en')),
   name TEXT,
   company TEXT,

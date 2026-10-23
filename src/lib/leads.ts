@@ -12,7 +12,8 @@ export type LeadSource =
   | 'inscripcion-curso-wazuh'
   | 'lista-espera-wazuh-en'
   | 'lista-espera-techai-boost'
-  | 'lista-espera-seo-geo';
+  | 'lista-espera-seo-geo'
+  | 'manual';
 
 export interface LeadInput {
   source: LeadSource;

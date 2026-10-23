@@ -50,6 +50,7 @@ const SOURCE_LABELS: Record<string, string> = {
   'lista-espera-wazuh-en': 'Lista espera Wazuh EN',
   'lista-espera-techai-boost': 'Lista espera TechIA Boost',
   'lista-espera-seo-geo': 'Lista espera SEO+GEO',
+  'manual': 'Alta manual',
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
@@ -79,9 +80,14 @@ function formatDateOnly(dateStr: string | null): string {
         <h1 class="text-3xl font-bold" style="color: #ffffff;">CRM de Leads</h1>
         <p class="mt-2" style="color: #9ca3af;">Interesados que han contactado a través de los formularios del sitio</p>
       </div>
-      <a href="/aula/admin" class="px-4 py-2 rounded-lg transition-colors hover:opacity-80" style="background-color: #374151; color: #e5e7eb;">
-        Volver al admin del curso
-      </a>
+      <div class="flex items-center gap-3">
+        <a href="/aula/admin/leads/nuevo" class="px-4 py-2 rounded-lg font-semibold transition-colors hover:opacity-80" style="background-color: #0065ff; color: #ffffff;">
+          + Nuevo lead
+        </a>
+        <a href="/aula/admin" class="px-4 py-2 rounded-lg transition-colors hover:opacity-80" style="background-color: #374151; color: #e5e7eb;">
+          Volver al admin del curso
+        </a>
+      </div>
     </div>
   </div>
 

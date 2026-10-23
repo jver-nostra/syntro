@@ -1,0 +1,142 @@
+---
+import AulaLayout from '../../../../layouts/AulaLayout.astro';
+
+const user = Astro.locals.user;
+
+const ADMIN_EMAIL = 'julen.sistemas@gmail.com';
+
+if (!user || user.email !== ADMIN_EMAIL) {
+  return Astro.redirect('/aula');
+}
+
+const errorMsg = Astro.url.searchParams.get('error');
+---
+
+<AulaLayout title="Nuevo lead manual - Admin">
+  <div class="mb-6">
+    <a href="/aula/admin/leads" class="text-sm transition-colors hover:opacity-80" style="color: #60a5fa;">← Volver al listado</a>
+  </div>
+
+  <div class="max-w-2xl">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold" style="color: #ffffff;">Nuevo lead manual</h1>
+      <p class="mt-2" style="color: #9ca3af;">
+        Da de alta a alguien que no entró por los formularios del sitio (email directo, teléfono, en persona...). Quedará con origen "Alta manual".
+      </p>
+    </div>
+
+    {errorMsg && (
+      <div class="rounded-xl p-4 mb-6" style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #fca5a5;">
+        {errorMsg}
+      </div>
+    )}
+
+    <div class="rounded-xl p-6" style="background-color: #1a1f26; border: 1px solid #2d3748;">
+      <form method="post" action="/api/aula/admin/lead-create" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs mb-1" style="color: #9ca3af;">Nombre</label>
+            <input
+              type="text"
+              name="name"
+              class="w-full rounded-lg px-3 py-2 text-sm"
+              style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+              placeholder="Ej. Juan García"
+            />
+          </div>
+          <div>
+            <label class="block text-xs mb-1" style="color: #9ca3af;">Empresa</label>
+            <input
+              type="text"
+              name="company"
+              class="w-full rounded-lg px-3 py-2 text-sm"
+              style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+              placeholder="Ej. Cerrajeros Plus SL"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs mb-1" style="color: #9ca3af;">Email</label>
+            <input
+              type="email"
+              name="email"
+              class="w-full rounded-lg px-3 py-2 text-sm"
+              style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+              placeholder="nombre@empresa.com"
+            />
+          </div>
+          <div>
+            <label class="block text-xs mb-1" style="color: #9ca3af;">Teléfono</label>
+            <input
+              type="tel"
+              name="phone"
+              class="w-full rounded-lg px-3 py-2 text-sm"
+              style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+              placeholder="600 000 000"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs mb-1" style="color: #9ca3af;">Plan / Servicio de interés</label>
+          <input
+            type="text"
+            name="plan"
+            class="w-full rounded-lg px-3 py-2 text-sm"
+            style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+            placeholder="Ej. Wazuh Gestionado, curso avanzado..."
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs mb-1" style="color: #9ca3af;">Mensaje / Contexto</label>
+          <textarea
+            name="message"
+            rows="3"
+            class="w-full rounded-lg px-3 py-2 text-sm"
+            style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+            placeholder="Cómo llegó el contacto y qué pedía..."
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs mb-1" style="color: #9ca3af;">Estado inicial</label>
+            <select name="status" class="w-full rounded-lg px-3 py-2 text-sm" style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;">
+              <option value="nuevo" selected>Nuevo</option>
+              <option value="contactado">Contactado</option>
+              <option value="convertido">Convertido</option>
+              <option value="descartado">Descartado</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs mb-1" style="color: #9ca3af;">Próximo seguimiento (opcional)</label>
+            <input
+              type="date"
+              name="next_follow_up_date"
+              class="w-full rounded-lg px-3 py-2 text-sm"
+              style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs mb-1" style="color: #9ca3af;">Nota inicial (opcional, se guarda en el historial)</label>
+          <textarea
+            name="note"
+            rows="2"
+            class="w-full rounded-lg px-3 py-2 text-sm"
+            style="background-color: #0f1419; color: #e5e7eb; border: 1px solid #2d3748;"
+            placeholder="Ej. Le escribí el 23/10 retomando el presupuesto del asistente de voz..."
+          ></textarea>
+        </div>
+
+        <button type="submit" class="px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors hover:opacity-80" style="background-color: #0065ff; color: #ffffff;">
+          Crear lead
+        </button>
+      </form>
+    </div>
+  </div>
+</AulaLayout>
